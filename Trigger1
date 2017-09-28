@@ -1,0 +1,16 @@
+Triggers
+  First event: insert. Any time a record is created. A corresponding trigger will run.
+  Second event: update. When one or many records are changed on existing records.
+  Third event: delete. When records are deleted.
+  
+Triggers do not require visualforce or lightning, which is why it's good to learn first.
+
+Trigger requirements:
+  1. Actual trigger
+  2. Test Class - An Apex class that makes sure trigger runs properly. Verifies if your trigger works.
+  TDD (Test Driven Development) - Write test classes even before triggers are written.
+
+
+
+
+
