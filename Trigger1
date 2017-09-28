@@ -1,4 +1,4 @@
-Triggers
+TRIGGERS
   First event: insert. Any time a record is created. A corresponding trigger will run.
   Second event: update. When one or many records are changed on existing records.
   Third event: delete. When records are deleted.
@@ -12,5 +12,70 @@ Trigger requirements:
 
 
 
+TRIGGER 1
+//Trigger's Name, Object and Event.
+trigger TestTrigger1 on Lead (before update) {		
+    //Trigger loop. Multiple records enter this loop. Loop through all leads in Trigger.new, and for each record assign it to variable l.
+    for(Lead l : Trigger.new) {
+        //Uses dot-notation. Assigns First/Last name of each loop variable 'l'.
+        l.FirstName = 'Hello';
+        l.LastName  = 'World';
+    }
+}		    //boilerplate code.
 
 
+
+SYNTAX
+- Open and closed brackets defines what the scope is. Indents are used to signify scopes/context.
+- Spaces don't matter.
+- If a line doesn't end with a bracket, it needs to end with a semi-colon.
+
+
+
+TRIGGER LOOP
+- Every trigger will use a trigger loop. E.g.:
+for (Lead l : Trigger.new) {
+    //Trigger logic within here.
+}
+- The actual trigger loop is just the first and last lines, which contains the trigger logic that will run for each record.
+- This is called a for-each loop, because it repeats everything inside the scope FOR EACH record within a list.
+- The List is Trigger.new; record is l.
+- Trigger.new is the list of all records entering a trigger.
+- Lead is the TYPE of record that will be iterated across.
+- 'l' is a loop variable of type 'Lead', which can be used within the trigger loop's scope. It is the record.
+- Batch size maximum records is 200.
+
+
+
+TRIGGER 2
+//Every person who participates in a Demo gets an Apple Watch.
+//Create a trigger that creates a task for each new opportunity.
+//Subject: "Appl Watch Promo"
+//Description: "Send one ASAP!"
+//Priority: "High"
+
+//after insert: runs AFTER an opportunity is created.
+trigger AppleWatch on Opportunity (after insert) {
+    for (Opportunity opp : Trigger.new) {
+        //Create a new Task record and assign it to variable t of type Task.
+        Task t = new Task();
+        //Access the new Task's fields using dot.notation.
+        t.Subject     = 'Apple Watch Promo';
+        t.Description = 'Send them one ASAP!';
+        t.Priority    = 'High';
+        //Assign the Opportunity Id to the Task's 'Related To' Field.
+        t.WhatId      = opp.Id;
+        //Create the task in SF.
+        insert t;
+    }
+}
+
+
+
+FURTHER TRIGGER NOTES (BEFORE vs. AFTER)
+- Trigger.new will be the same for all trigger loops.
+- before and after are very important distinctions.
+- Before/After triggers are run relative to the 'milestone' of the record being saved.
+- Before triggers: Don't need to save record; loop logic saves before the record save. However, system-level fields are not available because they haven't been populated yet.
+- After triggers: System fields (RecordID, Created Date, Last Modified Date) will be accessible for after triggers. However, they run after the save milestone, so you need to explicitly save your changes. If you don't, it creates infinite loop.
+- 
