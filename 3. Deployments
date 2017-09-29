@@ -1,0 +1,27 @@
+//Delpoyments
+- Can deploy code, declaritive components, validation rules, page layouts, dashboard/reports, workflows rules.
+- Code MUST be deployed from sandbox to production.
+
+
+DEPLOYMENT BEST PRACTICES
+- Each development usually gets their own developer orgs. Data must be created for testing.
+- Deploy from Developer Orgs to a full Sandbox. Test with real data.
+- Then deploy components to production. Test with real data.
+
+
+REQUIREMENTS FOR DEPLOYMENT
+- 75% code coverage.
+- All assertions must pass.
+
+
+DEPLOYMENT PROCESS
+- Choose components to be deployed.
+- Check for missing dependencies.
+- Run all Apex test classes.
+- Return results.
+
+
+DEPLOYMENT TOOLS
+- Change sets - Point and click wizard.
+- Coding editor to deploy code. May have more helpful information, but cannot deploy declarative components
+- Programmatic - Ant Migration Tool, SOAP API. 
