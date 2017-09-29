@@ -57,16 +57,18 @@ TRIGGER 2
 //after insert: runs AFTER an opportunity is created.
 trigger AppleWatch on Opportunity (after insert) {
     for (Opportunity opp : Trigger.new) {
-        //Create a new Task record and assign it to variable t of type Task.
-        Task t = new Task();
-        //Access the new Task's fields using dot.notation.
-        t.Subject     = 'Apple Watch Promo';
-        t.Description = 'Send them one ASAP!';
-        t.Priority    = 'High';
-        //Assign the Opportunity Id to the Task's 'Related To' Field.
-        t.WhatId      = opp.Id;
-        //Create the task in SF.
-        insert t;
+        if (opp.Amount > 50000) {
+            //Create a new Task record and assign it to variable t of type Task.
+            Task t = new Task();
+            //Access the new Task's fields using dot.notation.
+            t.Subject     = 'Apple Watch Promo';
+            t.Description = 'Send them one ASAP!';
+            t.Priority    = 'High';
+            //Assign the Opportunity Id to the Task's 'Related To' Field.
+            t.WhatId      = opp.Id;
+            //Create the task in SF.
+            insert t;
+        } 
     }
 }
 
