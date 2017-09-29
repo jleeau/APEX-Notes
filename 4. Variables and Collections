@@ -1,0 +1,139 @@
+//APEX Variables and Collections
+- Core Apex Development Tools:
+	- Variables: 
+	- Collections: Store many things in one place, e.g. List of 20 accounts assigned to me.
+	- Loops: 
+	- If statements:
+	- Data Manipulation Language (DML): Saves what you have done in your code into the SF database.
+	- Dot Notation:
+	
+
+VARIABLES
+- Store information in code. Makes them human-readable.
+- Strongly-typed language: every variable must be of a specific type.
+- To create a variable, choose a datatype and variable name. E.g. String myCompanyName = 'Google';
+- Types of variables:
+	- String
+	- Integer, Decimal
+	- Date, DateTime
+	- Boolean
+	- SObject
+	
+
+PRIMITIVE DATA TYPES
+- STRING:
+	- String userId = '00530000000ibYc';
+	- Single quotes.
+	- Don't add integers as string as adding them concatenates them.
+	- Secrets: .capitalize(), .contains('David')
+- INTEGER:
+	- Integer employees = 100;
+	- Non-decimal numbers.
+	- No single quotes.
+	- Can't store decimals or they will be rounded down.
+- DECIMAL:
+	- Decimal probability = 0.30;
+	- Decimal numbers with varying number of trailing digits.
+	- Can store integers in decimals, but if uncertain, store as decimal.
+	- Secrets: .round()
+- DATE:
+	- Date currentDate = Date.today();
+	- Secrets: .addDays(30), .newInstance(2020, 3, 17), .isLeapYear()
+- DATETIME:
+	- DateTime currentTime = DateTime.now();
+	- Tracks time and date extremely precisely.
+	- Does time-zone conversions automatically.
+	- Secrets: .formatGmt();, .addSeconds(15), .hour()
+- BOOLEAN:
+	- Boolean isActive = true;
+	- True or false value.
+	- True and False are reserved keywords. Don't need to wrap them with quotes.
+- SOBJECT:
+	- Contact ceo = new Contact();		Stock__c facebook = new Stock__c();
+	- A standard or custom SF object.
+	- Can create new records or assign existing variables.
+	- Secrets: .clone(), .clear()
+
+
+TRIGGER EXAMPLE
+//Purchase Date, Case Created Date, Warranty Total Days, Warranty Percentage, Has Extended Warranty
+- Convert Decimal to Integer by appending the special method .intValue()
+- To calculate days between, can't just subtract date from date. Must use special method .daysBetween()
+- To limit the number of decimals in our warrantyPercentage decimal, use .setScale();
+
+trigger WarrantySummary on Case (before insert) {
+    for(Case myCase : Trigger.new) {
+        String purchaseDate 	 	= myCase.Product_Purchase_Date__c.format();
+        String createdDate 			= DateTime.now().format();
+        Integer warrantyDays 	    = myCase.Product_Total_Warranty_Days__c.intValue();
+        Decimal warrantyPercentage  = (100 * (myCase.Product_Purchase_Date__c.daysBetween(Date.today()) 
+                                              / myCase.Product_Total_Warranty_Days__c)).setScale(2);
+        Boolean hasExtendedWarranty = myCase.Product_Has_Extended_Warranty__c;
+        
+        myCase.Warranty_Summary__c  = 'Product purchased on ' + purchaseDate + ' '
+            						+ 'and case created on ' + createdDate + '.' + '\n'
+            						+ 'Warranty is for ' + warrantyDays + ' '
+            						+ 'days and is ' + warrantyPercentage + '% through its warranty period.\n'
+            						+ 'Extended warranty: ' + hasExtendedWarranty + '\n';   						
+    }
+}
+
+TEST CLASS
+@istest
+public class WarrantySummaryTest {
+    @istest static void createCase() {
+        Case newCase = new Case();
+        newCase.Product_Purchase_Date__c 	   = Date.newInstance(2017, 08, 24);
+        newCase.Product_Total_Warranty_Days__c = 30;
+        newCase.Status 						   = '1. New';
+
+        insert newCase;
+    }
+}
+
+
+COLLECTIONS
+- Collections can store a bunch of primitive data types, but can only be of one type.
+- Collections let us run logic in bulk, e.g. editing multiple Opportunities at once.
+- Two types:
+	- List: an ordered collection of records. Every record in the list has a position. E.g.
+		List<String> names = new List<String>();	//Create a new variable 'names', String list, and instatiate a new string list.
+		names.add('David');		
+		names.add('Jodi');
+		
+		- Always create the variable before assigning the list to it.
+		- Starts at 0.
+		- Lists do not dedupe values. It can have man 'Davids'.
+		- Secrets: 
+			.get(0); will get any value of a list in a specified position.
+			.sort(); rearranges the positioning of records in a list.
+			.size(); gives the number of records in a list.
+		- Trigger.new is a list of SObject, i.e. list of records entering trigger. The SObject type is assigned in the trigger loop.
+		
+	- Set: An unordered collection of records. E.g.
+		Set<Integer> primes = new Set<Integer>();
+			primes.add(2);
+			primes.add(3);
+			primes.add(3);
+		
+		- Using a set is more efficient.
+		- Built in de-duping power; the set will combine the two '3's.
+		- Doesn't automatically de-dupe records in an SObject, however.
+		- Secrets:
+			.contains(3); automatically searches set for a specific value and tells me if it's there or not.
+			.size();
+			.add();
+			.isEmpty();
+			NO get() or sort() method.
+
+
+
+
+
+
+
+
+
+
+
+
