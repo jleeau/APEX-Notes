@@ -75,7 +75,38 @@ trigger AppleWatch on Opportunity (after insert) {
 FURTHER TRIGGER NOTES (BEFORE vs. AFTER)
 - Trigger.new will be the same for all trigger loops.
 - before and after are very important distinctions.
-- Before/After triggers are run relative to the 'milestone' of the record being saved.
+- Before/After triggers are run relative to the 'milestone' of the record being saved, edited or deleted.
 - Before triggers: Don't need to save record; loop logic saves before the record save. However, system-level fields are not available because they haven't been populated yet.
 - After triggers: System fields (RecordID, Created Date, Last Modified Date) will be accessible for after triggers. However, they run after the save milestone, so you need to explicitly save your changes. If you don't, it creates infinite loop.
-- 
+
+
+Non-existing ID
+- If you assign an Id using a before trigger, it can't access system-level field of Id. Will get a "Required field missing: ParentId".
+- All System-level fields are not created yet before the milestone, so any fields are NULL.
+- To fix: change it to after trigger. That's it.
+
+trigger NonExistentId on Case (after insert) {
+    for (Case myCase : Trigger.new) {
+        CaseComment cc = new CaseComment();
+        cc.CommentBody = 'Case received by Agent';
+        cc.ParentId    = myCase.Id;
+        insert cc;
+    }
+}
+
+
+
+
+TRIGGER 3
+//When an Account is created, create a new case. Assign it to new intern, subject: 'Dedupe this account', Associate it with the Account.
+
+trigger TestTrigger3 on Account (after insert) {
+    for (Account acc : Trigger.new) {
+        Case newCase 	  = new Case();
+        newCase.Subject   = 'Dedupe this account';
+        newCase.AccountId = acc.Id;
+        newCase.OwnerId = '0056F000005PNdq';
+        insert newCase;
+    }
+}
+
