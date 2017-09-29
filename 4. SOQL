@@ -1,0 +1,37 @@
+- Inner SOQL Query: Use that to look up related object records.
+- E.g. Example:
+
+trigger DoNotAllowSlaChangesWithOpenCases on Account (before update) {
+	//Look up all accounts, and also cases 
+	List<Account> accountsWithCases = [SELECT Id, 
+												(SELECT Id 
+												   FROM Cases
+												  WHERE IsClosed = false)
+												  LIMIT 1)	//efficiently selecting data; at LEAST 1 closed case.
+										 FROM Account
+										WHERE Id IN :Trigger.new];
+
+	for (Account acc : accountsWithCases) {
+		//Take list of accounts w/ cases (accountsWithCases), put it in a map from accounts to cases, then get that, and run it.
+	
+		//Check if account SLA field is changed.
+		String oldSlaValue = Trigger.oldMap.get(acc.Id).SLA__c;		//This map is a lookup dictionary of what the previous value was.
+		String newSlaValue = Trigger.newMap.get(acc.Id).SLA__c;		//If a user made changes and it comes thru trigger, this is the new value. 
+		Boolean isAccSlaChanged = oldSlaValue != newSlaValue;
+		
+		// Check if there are open cases
+		Boolean accHasOpenCases = acc.Cases.size() > 0;
+		
+		//Get the Trigger.new version of the account, because the original one only has the list of accounts with cases, but is not Trigger.new which also houses the cases.
+		Account accInTriggerNew = Triger.newMap.get(acc.Id);
+		
+		//Check if SLA has been changed AND account still has opened cases.
+		if (isAccSlaChanged && accHasOpenCases) {
+			accInTriggerNew.SLA__c.addError('Please do not change SLA when there are open cases.');
+		}
+	}
+
+}
+
+
+												
