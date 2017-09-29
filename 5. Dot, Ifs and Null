@@ -1,4 +1,4 @@
-//If and Loops
+//Dot, Ifs and Null
 
 DOT NOTATION
 
@@ -45,11 +45,58 @@ Accessing Fields and Relationships
 
 
 IF STATEMENTS
-- Run code under certain conditions.
+- Run code under certain conditions. Can minimize system resources for greater efficiency.
+- Comparison Operators: Compares 2 values and evaluates true/false. There are 6:
+	== : Equals. See if value on left equal to value on right.
+	>  : Greater than. Is the value on left greater than value on right.
+	<= : Less than or equal.
+	!= : Not Equals.
+	&& : And. Combines operators.
+	|| : Or. Combines operators.
 	
 
+trigger AssignLeadGrade on Lead (before insert, before update) {
+	for (Lead myLead : Trigger.new) {
+		if (myLead.Score__c != null) {
+			if (myLead.Score == 100) {
+				myLead.Grade__c = 'A+';
+			} else if (myLead.Score__c >= 90) {
+				myLead.Grade__c = 'A';
+			} else if (myLead.Score__c >= 80 {
+				myLead.Grade__c = 'B';
+			} else {
+				myLead.Grade__c = 'F';
+				myLead.Status 	= 'Closed - Trash';
+			}
+		} else {
+			//do something.
+		}
+	}
+}
 
 
+NULLS
+- NULL: When there is no data, e.g. String myString;	Date myDate = null;
+- String myString = ''; IS NOT NULL. It is an Empty String.
+
+- NULL POINTER EXCEPTION:
+	Date deadline;
+	deadline = myTask.ActivityDate;
+	deadline = deadline.addDays(1);
+
+	//This yields a null pointer exception if ActivityDate, a non-required field, is empty. Possibly setting deadline to null, and then adding a day to null.
+
+- NULL CHECK: To catch possible null assignments.
+	if (deadline == null) {
+		deadline = Date.today().addMonths(1);
+	} else {
+		deadline.addDays(1);
+	}
+
+
+- Explicitly create an empty record rather than assign a variable to null
+	List<Contact> myFavoriteCelebrities = new List<Contacts>();
+	Contact myContact = new Contact();
 
 
 	
