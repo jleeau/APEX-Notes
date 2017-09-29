@@ -1,3 +1,5 @@
+//Hierarchy: formula field, custom field, validation rule, workflow, process builder, flow, APEX.
+
 TRIGGERS
   First event: insert. Any time a record is created. A corresponding trigger will run.
   Second event: update. When one or many records are changed on existing records.
