@@ -36,3 +36,17 @@ trigger LeadingCompetitor on Opportunity (before insert, before update) {
     }
 
 }
+
+
+
+//Secret Information Trigger
+//Check if a case has any of the following keywords:
+	- Credit Card
+	- Social Security
+	- SSN
+	- Passport
+//If it does have secret information:
+	- Create a child case
+	- Describe the situation
+	- Escalate it
+	- Mark as 'High Priority'
