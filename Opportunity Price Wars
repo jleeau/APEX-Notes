@@ -1,0 +1,38 @@
+//Opportunity Price Wars
+//Automatically identifies the Opportunity's competitor offering the highest price.
+//Find competitor with highest price, then populate the 'Leading Competitor' field with that Competitor.
+//Also populates the competitor prices.
+
+
+
+trigger LeadingCompetitor on Opportunity (before insert, before update) {
+    
+    for (Opportunity opp : Trigger.new) {
+        List<Decimal> competitorPrices = new List<Decimal>();
+        competitorPrices.add(opp.Competitor_1_Price__c);
+        competitorPrices.add(opp.Competitor_2_Price__c);
+        competitorPrices.add(opp.Competitor_3_Price__c);
+        
+        List<String> competitors = new List<String>();
+        competitors.add(opp.Competitor_1__c);
+        competitors.add(opp.Competitor_2__c);
+        competitors.add(opp.Competitor_3__c);
+        
+        //use a for-loop to keep track of iterator
+        //Store each price as highestPrice and compare it to each competitor's price in loop
+        Decimal highestPrice;
+        Integer highestPricePosition;
+        for (Integer i = 0; i < competitorPrices.size(); i++) {
+            Decimal currentPrice = competitorPrices.get(i);
+            if (highestPrice == null || currentPrice > highestPrice) {
+                highestPrice = currentPrice;		//Finds highest price
+                highestPricePosition = i;		//Sets highest price position
+            }
+        }
+        
+        //Populate the leading competitor field with the competitor matching the highest price position
+        opp.Leading_Competitor__c = competitors.get(highestPricePosition);
+		opp.Competitor_Price__c = competitorPrices.get(highestPricePosition);
+    }
+
+}
