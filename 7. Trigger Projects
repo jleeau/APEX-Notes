@@ -159,3 +159,84 @@ private class CheckSecretInformationTest {
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+//PROJECT 1: FIX WARRANTY SUMMARY TRIGGER
+//Deals with null exceptions for warranty information.
+
+trigger WarrantySummary on Case (before insert) {
+    for(Case myCase : Trigger.new) {
+        String createdDate 			= DateTime.now().format();
+        Boolean hasExtendedWarranty = myCase.Product_Has_Extended_Warranty__c;
+        
+        String purchaseDate = '';
+        Integer warrantyDays = 0;
+        Decimal warrantyPercentage = 0;
+
+        
+        if (myCase.Product_Purchase_Date__c != null) {
+            purchaseDate 	= myCase.Product_Purchase_Date__c.format();
+            
+            if (myCase.Product_Total_Warranty_Days__c != null) {   
+                warrantyDays 	= myCase.Product_Total_Warranty_Days__c.intValue();
+                warrantyPercentage  = (100 * (myCase.Product_Purchase_Date__c.daysBetween(Date.today()) 
+                                              / myCase.Product_Total_Warranty_Days__c)).setScale(2);
+            } else {
+                warrantyDays	= 0;
+                warrantyPercentage = 0;
+            }   
+        } else if (myCase.Product_Total_Warranty_Days__c != null) {
+            purchaseDate = 'Unknown';
+            warrantyDays = myCase.Product_Total_Warranty_Days__c.intValue();
+            warrantyPercentage = 0;
+        } else {
+            purchaseDate = 'Unknown';
+            warrantyDays	= 0;
+			warrantyPercentage = 0;
+        }
+        
+        
+        
+        myCase.Warranty_Summary__c  = 'Product purchased on ' + purchaseDate + ' '
+            						+ 'and case created on ' + createdDate + '.' + '\n'
+            						+ 'Warranty is for ' + warrantyDays + ' '
+            						+ 'days and is ' + warrantyPercentage + '% through its warranty period.\n'
+            						+ 'Extended warranty: ' + hasExtendedWarranty + '\n'; 
+        System.debug(myCase.Warranty_Summary__c);
+    }
+}
+
+
+//PROJECT 1: FIX WARRANTY SUMMARY TEST CLASS
+
+@istest
+public class WarrantySummaryTest {
+    @istest static void createCase() {
+        //Case 1
+        Case newCase1 = new Case();
+        //newCase1.Product_Purchase_Date__c 	   = Date.newInstance(2017, 08, 24);
+        //newCase1.Product_Total_Warranty_Days__c = 30;
+        newCase1.Status 						   = '1. New';
+        insert newCase1;
+        
+        //Case 2
+        Case newCase2 = new Case();
+        newCase2.Product_Purchase_Date__c 	   = Date.newInstance(2017, 08, 24);
+        //newCase2.Product_Total_Warranty_Days__c = 30;
+        newCase2.Status 						   = '1. New';
+        insert newCase2;
+        
+        //Case 3
+        Case newCase3 = new Case();
+        //newCase3.Product_Purchase_Date__c 	   = Date.newInstance(2017, 08, 24);
+        newCase3.Product_Total_Warranty_Days__c = 30;
+        newCase3.Status 						   = '1. New';
+        insert newCase3;
+        
+        //Case 4
+        Case newCase4 = new Case();
+        newCase4.Product_Purchase_Date__c 	   = Date.newInstance(2017, 08, 24);
+        newCase4.Product_Total_Warranty_Days__c = 30;
+        newCase4.Status 						   = '1. New';
+        insert newCase4;
+    }
+}
