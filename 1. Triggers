@@ -1,9 +1,9 @@
 //Hierarchy: formula field, custom field, validation rule, workflow, process builder, flow, APEX.
 
-TRIGGERS
-  First event: insert. Any time a record is created. A corresponding trigger will run.
-  Second event: update. When one or many records are changed on existing records.
-  Third event: delete. When records are deleted.
+TRIGGERS: There are 3 trigger events:
+  insert. Any time a record is created. A corresponding trigger will run.
+  update. When one or many records are changed on existing records.
+  delete. When records are deleted.
   
 Triggers do not require visualforce or lightning, which is why it's good to learn first.
 
