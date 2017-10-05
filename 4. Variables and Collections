@@ -55,7 +55,7 @@ PRIMITIVE DATA TYPES
 	- Secrets: .clone(), .clear()
 
 
-TRIGGER EXAMPLE
+//WARRANTY SUMMARY TRIGGER
 //Purchase Date, Case Created Date, Warranty Total Days, Warranty Percentage, Has Extended Warranty
 - Convert Decimal to Integer by appending the special method .intValue()
 - To calculate days between, can't just subtract date from date. Must use special method .daysBetween()
@@ -78,7 +78,8 @@ trigger WarrantySummary on Case (before insert) {
     }
 }
 
-TEST CLASS
+//WARRANTY SUMMARY TEST CLASS
+
 @istest
 public class WarrantySummaryTest {
     @istest static void createCase() {
