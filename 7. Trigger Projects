@@ -1,8 +1,7 @@
-//Opportunity Price Wars
+//OPPORTUNITY PRICE WARS TRIGGER
 //Automatically identifies the Opportunity's competitor offering the highest price.
 //Find competitor with highest price, then populate the 'Leading Competitor' field with that Competitor.
 //Also populates the competitor prices.
-
 
 
 trigger LeadingCompetitor on Opportunity (before insert, before update) {
@@ -38,8 +37,39 @@ trigger LeadingCompetitor on Opportunity (before insert, before update) {
 }
 
 
+//OPPORTUNITY PRICE WARS TEST CLASS
+//To start a test class, try to find all conditionals required to start it.
 
-//Secret Information Trigger
+@isTest
+private class LeadingCompetitorTest {
+    
+    @isTest static void createOppWithCompetitors() {
+        //Create or update an opportunity
+        Opportunity opp = new Opportunity();
+        opp.Name 		= 'Big Deal';
+        opp.CloseDate   = Date.today();
+        opp.StageName   = 'Prospecting';
+        
+        //Populate all 3 competitor price fields
+        opp.Competitor_1_Price__c = 5000;
+        opp.Competitor_2_Price__c = 1500;
+        opp.Competitor_3_Price__c = 25000;
+        
+        //Populate all 3 competitor fields
+        opp.Competitor_1__c = 'Amazon';
+        opp.Competitor_2__c = 'Google';
+        opp.Competitor_3__c = 'Microsoft';
+        
+        insert opp;
+        System.debug('Opportunity ' + opp.Name + ' inserted with all competitor fields populated.');
+    }
+	
+}
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+//SECRET INFORMATION TRIGGER
 //Check if a case has any of the following keywords:
 	- Credit Card
 	- Social Security
@@ -50,3 +80,82 @@ trigger LeadingCompetitor on Opportunity (before insert, before update) {
 	- Describe the situation
 	- Escalate it
 	- Mark as 'High Priority'
+	
+	
+//Use after insert because 1. child case is not in Trigger.new, 2. need to get case Id to associate.
+//In the escalation case description (on child record), lists out only the sensitive keywords found in the original case.
+
+trigger CheckSecretInformation on Case (after insert, before update) {
+    
+    String childCaseSubject = 'Warning : Parent case may contain secret info';
+    
+    //Add secret words to a collection (set)
+    Set<String> secretKeywords = new Set<String>();
+    secretKeywords.add('Credit Card');
+    secretKeywords.add('Social Security');
+    secretKeywords.add('SSN');
+    secretKeywords.add('Passport');
+    secretKeywords.add('Bodyweight');
+    
+    //Check to see if case contains any secret keywords
+    List<Case> casesWithSecretInfo = new List<Case>();
+    List<String> keywordsFound = new List<String>();
+    
+    for (Case myCase : Trigger.new) {
+        if (myCase.Subject != childCaseSubject) {		//Excludes child cases from infinitely entering the trigger
+            for (String keyword : secretKeywords) {
+                if (myCase.Description != null && myCase.Description.containsIgnoreCase(keyword)) {
+                    System.debug('Case ' + myCase.Id + ' includes secret keyword ' + keyword);
+                    //break;		break out if even one Keyword is present.
+                    keywordsFound.add(keyword);		//Records all keywords found in description.
+                }
+        	}
+            if (keywordsFound.size() > 0) {
+				casesWithSecretInfo.add(myCase);   
+            }	
+            		//Add the case 
+        }
+    }
+    
+    String keywordString = '';
+    for (Integer i = 0; i < keywordsFound.size(); i++) {
+        keywordString += keywordsFound[i] + ', ';
+    }
+    
+    //If case contains a secret keyword, create a child case
+    List<Case> casesToCreate = new List<Case>();
+    for (Case caseWithSecretInfo : casesWithSecretInfo) {
+        Case childCase 		  = new Case();
+        childCase.subject     = childCaseSubject;
+        childCase.ParentId    = caseWithSecretInfo.Id;
+        childCase.Priority    = 'High';
+        childCase.Description = 'The following keywords were found: ' + keywordString;
+        casesToCreate.add(childCase);
+    }
+    insert casesToCreate;		//bulkify the trigger
+    System.debug('Cases inserted: ' + casesToCreate);
+    
+}
+
+
+//SECRET INFORMATION TEST CLASS
+//In all test classes, you need DML because nothing happens otherwise.
+
+@isTest
+private class CheckSecretInformationTest {
+    
+    @isTest static void createCaseWithSecretInfo() {
+        //create/update a case
+        Case myCase = new Case();
+        myCase.Subject = 'Help!';
+        myCase.Description = 'My bodyweight';
+        insert myCase;
+        
+        System.debug('Case ' + myCase.Id + ' created with description ' + myCase.Description);
+
+    }
+
+}
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
