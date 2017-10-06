@@ -306,3 +306,10 @@ private class LeadDisqualificationTest {
     }
 
 }
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+//PROJECT 3: COUNT ITEMS
+//Create picklist with 5 choices on Account
+//Create number to count how many items from picklist are selected.
+//When everything removed, resets to zero.
