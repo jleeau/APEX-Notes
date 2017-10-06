@@ -37,6 +37,7 @@ trigger LeadingCompetitor on Opportunity (before insert, before update) {
 }
 
 
+
 //OPPORTUNITY PRICE WARS TEST CLASS
 //To start a test class, try to find all conditionals required to start it.
 
@@ -67,7 +68,7 @@ private class LeadingCompetitorTest {
 }
 
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //SECRET INFORMATION TRIGGER
 //Check if a case has any of the following keywords:
@@ -81,9 +82,9 @@ private class LeadingCompetitorTest {
 	- Escalate it
 	- Mark as 'High Priority'
 	
-	
 //Use after insert because 1. child case is not in Trigger.new, 2. need to get case Id to associate.
 //In the escalation case description (on child record), lists out only the sensitive keywords found in the original case.
+
 
 trigger CheckSecretInformation on Case (after insert, before update) {
     
@@ -136,6 +137,7 @@ trigger CheckSecretInformation on Case (after insert, before update) {
     System.debug('Cases inserted: ' + casesToCreate);
     
 }
+
 
 
 //SECRET INFORMATION TEST CLASS
@@ -206,6 +208,7 @@ trigger WarrantySummary on Case (before insert) {
 }
 
 
+
 //PROJECT 1: FIX WARRANTY SUMMARY TEST CLASS
 
 @istest
@@ -242,6 +245,9 @@ public class WarrantySummaryTest {
 }
 
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
 //PROJECT 2: LEAD DISQUALIFICATION TRIGGER
 //If any lead has 'test' in the first or last name, disqualifies the lead.
 
@@ -275,7 +281,8 @@ trigger LeadDisqualification on Lead (before insert, before update) {
 }
 
 
-//LEAD DISQUALIFICATION TEST CLASS
+
+//PROJECT 2: LEAD DISQUALIFICATION TEST CLASS
 
 @isTest
 private class LeadDisqualificationTest {
@@ -309,7 +316,52 @@ private class LeadDisqualificationTest {
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-//PROJECT 3: COUNT ITEMS
-//Create picklist with 5 choices on Account
-//Create number to count how many items from picklist are selected.
+
+//PROJECT 3: COUNT ITEMS TRIGGER
+////Counts the number of items selected in the Account picklist 'Services__c'.
+//Create picklist with 5 choices on Account. Create number to count how many items from picklist are selected.
 //When everything removed, resets to zero.
+
+
+trigger CountItems on Account (before insert, before update) {
+    
+    for (Account acc : Trigger.new) {
+	
+        //Check existing counter number
+        Integer counter = acc.Counter__c == null? 0: Integer.valueOf(acc.Counter__c);
+        System.debug(acc.Name + ' previously has ' + counter + ' Services selected.');
+        
+        //Check number of services picked
+        List<String> listServices = new List<String>();
+        listServices = acc.Services__c == null? listServices : acc.Services__c.split(';');
+        
+        Integer countServices = listServices.isEmpty() == true || listServices == null? 0: listServices.size();
+        System.debug('Services selected: ' + listServices + '. Count: ' + countServices);
+        
+        //Compare number of services to counter.
+        if (counter != countServices) {
+            acc.Counter__c = countServices;
+        }
+        System.debug('Final counter: ' + acc.Counter__c);
+    }
+}
+
+
+
+//PROJECT 3: COUNT ITEMS TEST CLASS
+
+@isTest
+private class CountItemsTest {
+    @isTest static void createAccount() {
+        Account newAcc = new Account();
+        newAcc.Name = 'ACME';
+        newAcc.CurrencyIsoCode = 'USD';
+        newAcc.Services__c = 'Piano';
+        insert newAcc;
+    }
+}
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+PROJECT 4: 
