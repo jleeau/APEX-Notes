@@ -240,3 +240,69 @@ public class WarrantySummaryTest {
         insert newCase4;
     }
 }
+
+
+//PROJECT 2: LEAD DISQUALIFICATION TRIGGER
+//If any lead has 'test' in the first or last name, disqualifies the lead.
+
+trigger LeadDisqualification on Lead (before insert, before update) {
+    List<String> leadFirstName = new List<String>();
+    List<String> leadLastName = new List<String>();
+    List<Lead> leadId = new List<Lead>();
+    List<Lead> disqualifiedLeads = new List<Lead>();
+    
+    for (Lead myLead : Trigger.new) {
+        leadLastName.add(myLead.LastName);
+        leadId.add(myLead);
+        
+        if (string.isEmpty(myLead.FirstName) || myLead.FirstName == null) {
+            leadFirstName.add('');
+        } else {
+            leadFirstName.add(myLead.FirstName);
+        }
+        
+            System.debug('FirstName: ' + myLead.FirstName);
+			System.debug('LastName: ' + myLead.LastName);
+    }
+    
+    for (Integer i = 0; i < leadId.size(); i++) {
+        if (leadFirstName[i] == 'test' || leadLastName[i] == 'test') {
+            disqualifiedLeads.add(leadId[i]);
+            disqualifiedLeads[i].Status = 'Disqualified';
+            System.debug('Status: ' + disqualifiedLeads[i].Status);
+        }
+    }
+}
+
+
+//LEAD DISQUALIFICATION TEST CLASS
+
+@isTest
+private class LeadDisqualificationTest {
+    @isTest static void createLead() {
+        
+        Lead newLead1 = new Lead();
+        newLead1.FirstName = 'Test';
+        newLead1.LastName = 'Anonymous';
+        newLead1.Company = 'ACME';
+        newLead1.Status = 'Open';
+        insert newLead1;
+        
+        Lead newLead2 = new Lead();
+        newLead2.FirstName = 'NotTest';
+        newLead2.LastName = 'Anonymous';
+        newLead2.Company = 'ACME';
+        newLead2.Status = 'Open';
+        insert newLead2;
+        
+        newLead2.Status = 'Open';
+        newLead2.LastName = 'Test';
+        update newLead2;
+        
+        Lead newLead3 = new Lead();
+        newLead3.LastName = 'Anonymous';
+        newLead3.Company = 'ACME';
+        insert newLead3;
+    }
+
+}
