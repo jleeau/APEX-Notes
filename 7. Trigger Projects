@@ -335,11 +335,12 @@ trigger CountItems on Account (before insert, before update) {
         List<String> listServices = new List<String>();
         listServices = acc.Services__c == null? listServices : acc.Services__c.split(';');
         
-        Integer countServices = listServices.isEmpty() == true || listServices == null? 0: listServices.size();
+        Integer countServices = listServices.isEmpty() == true || listServices == null
+            ? 0: listServices.size();
         System.debug('Services selected: ' + listServices + '. Count: ' + countServices);
         
         //Compare number of services to counter.
-        if (counter != countServices) {
+        if (counter != countServices || (counter == 0 && countServices == 0)) {
             acc.Counter__c = countServices;
         }
         System.debug('Final counter: ' + acc.Counter__c);
@@ -364,4 +365,8 @@ private class CountItemsTest {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-PROJECT 4: 
+//PROJECT 4: MultiTasking Trigger
+//When account is CREATED, create a TASK for each item SELECTED in the SERVICES PICKLIST.
+//Each task's SUBJECT is the item VALUE.
+//ATTACH the TASK to the ACCOUNT.
+//DON'T CREATE a task if no items have been selected.
