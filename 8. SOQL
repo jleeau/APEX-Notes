@@ -1,9 +1,133 @@
 SOQL - Salesforce Object Query Language
-	- Search org for any record or settings.
-	- SOQL lets you access any records that aren't in Trigger.new, i.e. in Salesforce
-	- Similar to Reports, both have a primary use case of finding records
-	- SOQL is runs quicker because it is the pure code without the UI.
 
 //TIM'S USE CASE: INSTEAD OF HIGHLIGHTING STUFF IN REPORT, BUILD THE FILTER INTO THE SOQL QUERY.
 //SO ONLY THE THINGS THAT CAN BE PAID, SHOULD BE PAID.
 //IDEA IS TO LINK IT TO A VF PAGE AND ANYTHING ON THAT LIST CAN BE PAID.
+//OPTIONAL: EVERY TIME CONDITIONS ARE SATISFIED, TRIGGERS A NOTE/EMAIL TO TIM.
+//HAVE TWO REPORTBLOCKS, ONE THAT IMITATES THE REGULAR REPORT, ANOTHER THAT REFINES IT TO PAYABLE CLIENTS
+
+	- Search org for any record or settings.
+	- SOQL lets you access any records that aren't in Trigger.new, i.e. in Salesforce
+	- Similar to Reports, both have a primary use case of finding records
+	- SOQL is runs quicker because it is the pure code without the UI.
+	- Use SOQL instead of Data Loader, because SOQL can do more things, e.g. cross-object queries, doesn't need CSV, and can be used in APEX.
+	
+WHERE TO USE SOQL QUERY EDITOR	
+	- Salesforce Workbench - Tool to manage org. including SOQL editor. SOQL Query builder.
+	- Developer Console - Query Editor. Saves SOQL query history.
+	
+	
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+SOQL QUERIES
+- Every query requires SELECT and FROM bare minimum.
+- Doesn't care about field types; just cares if the correct API name is used.
+- Can't query ALL fields unlike SQL (SELECT *).
+- Examples: Basic
+	SELECT Field1, Field2, FieldX FROM ObjectName
+	SELECT Id FROM Account
+	SELECT Id, Name, Industry, Custom_Field__c FROM Account
+	SELECT OwnerId, StageName, CloseDate, Amount, Probability, IsClosed FROM Opportunity
+
+HIDDEN OBJECTS
+- Can't do thiese in Reports because they're not accessible.
+- Examples: Hidden Objects
+	SELECT Id, Name, PermissionsViewAllData, PermissionsModifyAllData, PermissionsAuthorApex FROM Profile
+	SELECT Id, Name, AssigneeId, PermissionSetId FROM PermissionSetAssignment
+
+FILTERED QUERIES
+- WHERE filter operators: =, !=, >, <=, IN, LIKE
+- Date Literals: TODAY, TOMORROW, YESTERDAY, THIS_WEEK, NEXT_MONTH, LAST_YEAR
+- Examples: Filtered SOQL Queries
+	SELECT Id, FirstName, Phone 
+	FROM Contact 
+	WHERE (Department = 'Executive Team'
+	OR Department = 'Finance'
+	OR Department = 'Technology')
+	AND DoNotCall = FALSE 
+	AND Phone != null
+	AND Birthdate < 1995-06-15
+	AND Title LIKE '%VP%'		//Fuzzy matching. % is a wildcard: any no. of characters
+	
+	//Also can abbreviate the Department field as a 'Set'.
+	WHERE Department IN ('Executive Team', 'Finance', 'Technology')
+ 
+SORTED QUERIES
+- Can organize results using ORDER BY query.
+- Examples: Ordered SOQL Queries
+	SELECT Id, Name, Amount, StageName
+	FROM Opportunity
+	WHERE StageName != 'Closed Lost'
+	ORDER BY StageName DESC, Amount DESC			//ASC: ascending, DESC: descending
+	LIMIT 10										//At very end
+	
+
+ADVANCED SOQL
+	
+CROSS-OBJECT QUERIES
+- Lets you pull information from related/child records. 
+- Traversing relationships. Relationships are made when there's a lookup OR master-detail relationship from one to another.
+- Whatever object the relationship field sits on, the referred object is the parent object. E.g. 'Account' field an Opportunity; the Account is the Parent object. Account can have many opportunities (children), but each opportunity can have one account (parent).
+- In the parent, there is no explicit relationship field to child objects, but it is a special hidden relationship field. It is the developer name of the related list, e.g. opportunities. Can find it through Workbench (info -> Object -> Child Object -> Relationship Name
+
+- Example: Querying Parent Data
+	SELECT Id, Amount, StageName,
+		   Account.Name,
+		   Account.Industry,
+		   Account.Website
+		   Account.Owner.Username		//Can query parent's parent data
+	  FROM Opportunity
+	 WHERE Account.Industry = 'Energy'
+	   AND Account.AnnualRevenue > 5000
+	   AND CreatedBy.Email != null
+- Example: Querying custom object parent
+	SELECT Id, Amount, StageName,
+		   Sales_Plan__r.Goal__c,
+		   Sales_Plan__r.Sponsor__c,
+		   Sales_Plan__r.Qtr__r.Id,
+		   Account.Industry
+	  FROM Opportunity
+	 WHERE Sales_Plan__r.Target__c > 0
+
+- Example: Inner Querying Child Data
+	SELECT Id,
+		   Amount, 
+		   StageName,
+		   Account.Name
+		   (SELECT Role, ContactId,
+		   		   Contact.FirstName,		//Can have other parent queries inside inner queries
+				   Contact.Email
+	  	      FROM OpportunityContactRoles
+		     WHERE Role != null
+		       AND Role != 'Influencer')	//Inner query for child object. Don't refer to child object name, refer to hidden rel. name
+	  FROM Opportunity
+	  //Pulls all org's opportunities, and for each opp, pulls contact roles whether it has them or not.
+- Example: Inner Querying Child Data Custom
+	SELECT Id,
+		   Amount,
+		   StageName,
+		   (SELECT Id,
+		           Name,
+				   Price__c
+			  FROM Competition__r)
+	FROM Opportunity
+		   
+
+GROUPED RESULTS QUERY
+- Like a summary report, allows grouping and aggregate data like sums and averages.
+- Example: Grouping SOQL Results
+	SELECT StageName,		//Once you use GROUP BY, can only include fields that are aggregate functions, except grouping field.
+		   SUM(Amount)		//Need to tell SOQL what to aggregate (sum, avg, max) or it is invalid.
+		   MAX(CloseDate),
+		   MIN(ExpectedRevenue),
+		   AVG(Amount),
+		   AVG(Account.AnnualRevenue),
+		   COUNT(Amount)	//Count all records in a group
+		   COUNT(Id)
+	  FROM Opportunity
+	 WHERE Amount != null
+  GROUP BY StageName
+	
+
+
+
