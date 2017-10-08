@@ -1,0 +1,9 @@
+SOQL - Salesforce Object Query Language
+	- Search org for any record or settings.
+	- SOQL lets you access any records that aren't in Trigger.new, i.e. in Salesforce
+	- Similar to Reports, both have a primary use case of finding records
+	- SOQL is runs quicker because it is the pure code without the UI.
+
+//TIM'S USE CASE: INSTEAD OF HIGHLIGHTING STUFF IN REPORT, BUILD THE FILTER INTO THE SOQL QUERY.
+//SO ONLY THE THINGS THAT CAN BE PAID, SHOULD BE PAID.
+//IDEA IS TO LINK IT TO A VF PAGE AND ANYTHING ON THAT LIST CAN BE PAID.
