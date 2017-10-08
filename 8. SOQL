@@ -58,8 +58,9 @@ SORTED QUERIES
 	SELECT Id, Name, Amount, StageName
 	FROM Opportunity
 	WHERE StageName != 'Closed Lost'
-	ORDER BY StageName DESC, Amount DESC			//ASC: ascending, DESC: descending
+	ORDER BY StageName DESC, Amount DESC			//ASC: ascending, DESC: descending. Can do layered sorting
 	LIMIT 10										//At very end
+	
 	
 
 ADVANCED SOQL
@@ -130,4 +131,38 @@ GROUPED RESULTS QUERY
 	
 
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Examples
+0. Find the Id, Name and Industry of all Accounts. Also include the creator's Id, Created Date, and Last Modified by's User Id.
+	SELECT Id, Name, Industry, CreatedById, CreatedDate, LastModifiedById FROM Account
+	
+1. Find name and email address of every contact. Include creator's Id, created date and last modified by's user ID.
+	SELECT Id, Name, Email, CreatedById, CreatedDate, LastModifiedById FROM Contact
+	
+2. Find Id of every account with over 50 employees. Do not include accounts UNDER $100,000 in annual revenue.
+	SELECT Id FROM Account WHERE NumberOfEmployees > 50 AND AnnualRevenue >= 100000
+	
+3. Find the name of every contact whose job title is CEO or VP. Do not include contacts who are not associated with an account.
+	SELECT Id, Name, Title FROM Contact WHERE (Title LIKE '%CEO%' OR Title LIKE'%VP%') AND AccountId != null
+	
+4. Find the birthday of all contacts born in the year 2000. DO not include contacts born in the month of May.
+	SELECT Name, Birthdate FROM Contact WHERE Birthdate >= 2000-01-01 AND Birthdate <= 2000-12-31 AND (Birthdate < 2000-05-01 OR Birthdate >=2000-06-01)
+	
+5. Find the Id of all contacts with the Sales Manager job title, who work for a company with over 90k annual revenue. Include all other contacts if their company has over 75 employees and is in the Finance industry.
+	SELECT Id, Name, Title, Account.AnnualRevenue FROM Contact WHERE (Title = 'Sales Manager' AND Account.AnnualRevenue > 90000) OR (Account.NumberOfEmployees > 75 AND Account.Industry = 'Finance')
+	
+6. Find the email of all contacts using an '@outlook.com' email address. Include contacts who are working in the 'Government' Industry.
+	SELECT Email FROM Contact WHERE Email LIKE '%@outlook.com' OR Account.Industry = 'Government'
+
+7. Find the name of all contacts with 'Sales' in their job title. Include 'CEO' contacts only if they work in the 'Technology' or 'Finance' industry.
+	SELECT Name FROM Contact WHERE Title LIKE '%Sales%' OR (Title = 'CEO' AND Account.Industry IN ('Technology', 'Finance'))
+	
+8. Find the name of the top 10 accounts based on annual revenue. Do a secondary sort by employee size, starting from smallest to largest.
+	SELECT Name, AnnualRevenue, NumberOfEmployees FROM Account ORDER BY AnnualRevenue DESC, NumberOfEmployees ASC LIMIT 10
+	
+9. Find account description and the name of each of its contacts for all accounts. One row for each account. Only include contacts whose email addresses include the number 5.
+	SELECT Id, Description, (SELECT Name, Email FROM Contacts WHERE Email LIKE '%5%') FROM Account
+	
+10. Find the account Id and count of all contacts for each account. Also include the birthdate of each account's youngest contact.
+	SELECT AccountId, COUNT(Id), MAX (Birthdate) FROM Contact GROUP BY AccountId
