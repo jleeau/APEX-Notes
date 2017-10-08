@@ -331,7 +331,7 @@ trigger CountItems on Account (before insert, before update) {
         Integer counter = acc.Counter__c == null? 0: Integer.valueOf(acc.Counter__c);
         System.debug(acc.Name + ' previously had ' + counter + ' Services selected.');
         
-        //Check number of services picked
+        //Check number of services picked and also create list of services
         List<String> listServices = new List<String>();
         listServices = acc.Services__c == null? listServices : acc.Services__c.split(';');
         
@@ -357,7 +357,7 @@ private class CountItemsTest {
         Account newAcc = new Account();
         newAcc.Name = 'ACME';
         newAcc.CurrencyIsoCode = 'USD';
-        newAcc.Services__c = 'Piano';
+        newAcc.Services__c = 'Piano; Guitars';
         insert newAcc;
     }
 }
@@ -365,8 +365,59 @@ private class CountItemsTest {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-//PROJECT 4: MultiTasking Trigger
+//PROJECT 4: MULTICASING TRIGGER
 //When account is CREATED, create a TASK for each item SELECTED in the SERVICES PICKLIST.
 //Each task's SUBJECT is the item VALUE.
 //ATTACH the TASK to the ACCOUNT.
 //DON'T CREATE a task if no items have been selected.
+
+trigger MultiTask on Account (after insert) {
+	List<Case> caseList = new List<Case>();
+    
+    for (Account acc : Trigger.new) {
+        //Check if the new account's counter is 0
+        Integer count = Integer.valueOf(acc.Counter__c);
+        
+        //Get list of services
+        if (count > 0) {
+            List<String> listServices = new List<String>();
+            listServices = acc.Services__c == null?
+                listServices : acc.Services__c.split(';');
+            //List<string> listServices = acc.Services__c.split(;);
+            System.debug('List of Services: ' + listServices);
+            
+            //Loop create leads
+            for (String item : listServices) {
+                Case newCase = new Case();
+                newCase.Status = '1. New';
+                //Assign subject & case to account
+                newCase.Subject = item;
+                newCase.AccountId = acc.Id;
+                System.debug('Case created. AccountID: ' + newCase.AccountId
+                             + ', Subject: ' + newCase.Subject);
+                caseList.add(newCase);
+            }   
+        } else {
+			System.debug('Nothing was created.');
+        }
+    }
+    insert caseList;	/bulkified insert.
+}
+
+
+//PROJECT 4: MULTICASING TEST CLASS
+
+@isTest
+public class MultiTaskTest {
+    @isTest static void createAccount() {
+        
+        Account myAcc = new Account();
+        myAcc.Name = 'ACME';
+        myAcc.CurrencyIsoCode = 'USD';
+        myAcc.Services__c = 'Drums; Guitars';
+        insert myAcc;
+    }
+
+}
+
+
