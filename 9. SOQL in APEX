@@ -80,4 +80,81 @@ APEX IN SOQL - BIND
 DE-DUPING TRIGGER
 - Know a lead is a dupe if the email is the same as a contact's.
 - Process: Match records based on email address. Add dupe leads to 'Data Quality' Queue. Add a note in lead description to tell which contacts matched to that lead.
+- APEX TRIGGERS RUN IN SYSTEM CONTEXT, SO GOD MODE.
+- Additional: 
+	- Contact first name begins with the same letter
+	- Last names are identical to lead
+	- Contact's account name contains new lead's company name
 
+
+trigger DeDupeLead on Lead (before insert) {
+    
+    //Get data quality queue recordd ready for future use	
+	List<Group> dataQualityGroup = [SELECT Id,
+                                    	   DeveloperName
+                                     	FROM Group
+                                       WHERE DeveloperName = 'Data_Quality'
+                                       LIMIT 1];
+    System.debug(dataQualityGroup.get(0).DeveloperName);
+    
+    for (lead myLead : Trigger.new) {
+        if (myLead.Email != null) {
+            //Prepare bind variables: firstName and companyName
+            String firstNameMatch;
+            if (myLead.FirstName != null) {		//Not Required, check null.
+                //Starts with the FIRST letter of the First Name
+                firstNameMatch = myLead.FirstName.subString(0,1) + '%';
+            }
+            //CONTAINS the lead's company name
+            String companyMatch = '%' + myLead.Company + '%'; 		//Required, won't be null.
+            
+            //Find all contacts that have same email as the lead
+            List<Contact> matchingContacts = [SELECT Id,
+                                                     FirstName,
+                                                     LastName,
+                                                     Account.Name
+                                                FROM Contact
+                                               WHERE (Email != null 
+												 AND  Email = :myLead.Email) 
+                                                  OR (FirstName != null
+                                                 AND  FirstName LIKE :firstNameMatch
+                                                 AND  LastName = :myLead.LastName
+                                              	 AND  Account.Name LIKE :companyMatch)];
+            System.debug(matchingContacts.size() + ' contact(s) found.');
+        
+            //If: yes match...
+            if (!matchingContacts.isEmpty()) {
+                //assign lead to Data Quality Queue.
+                if (!dataQualityGroup.isEmpty()) {		//checks for null data quality queue
+                    myLead.OwnerId = dataQualityGroup.get(0).Id;
+                }
+                
+                
+                //List contact Id in lead description.
+                String dupeContactsMessage = 'Duplicate contact(s) found\n';
+                for (Contact matchingContact : matchingContacts) {
+                    dupeContactsMessage += matchingContact.FirstName + ' '
+                                         + matchingContact.LastName + ', '
+                                         + matchingContact.Account.Name + ' ('
+                                         + matchingContact.Id + ')\n';
+                }
+                if (myLead.Description != null) {
+                    dupeContactsMessage += '\n' + myLead.Description;
+                }
+                myLead.Description = dupeContactsMessage;
+   
+            }
+            //If: no match, do nothing.
+        }   
+    }
+}
+
+
+
+
+DE-DUPING TEST CLASS
+- Possible scenarios:
+	- 0 contact matches.
+	- 1 contact matches.
+	- >1 contact matches.
+	- Fields are NOT populated. Hunt down null pointer exceptions.
