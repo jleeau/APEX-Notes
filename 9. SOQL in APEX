@@ -1,1 +1,83 @@
+SOQL IN APEX
+- We use SOQL in Apex because:
+	- Access fields that are not in Trigger.new.
+	- Modify records that aren't in Trigger.new.
+- Most of the good stuff happens outside of Trigger.new.
+
+What is in Trigger.new?
+- Base fields. Only standard and custom fields that exist on the actual object.
+- Fields in parents or children on other objects are not stored in Trigger.new.
+- E.g.
+	
+    //BROKEN
+    trigger MatchAccountOwner on Contact (before insert) {
+        for (Contact myCon : Trigger.new) {
+            if (myCon.AccountId != null) {
+                myCon.OwnerId = myCon.Account.OwnerId;      //Cannot access myCon.Account.OwnerId. It is considered NULL.
+            }
+        }
+    }
+	
+	//FIXED
+	trigger MatchAccountOwner on Contact (before insert) {
+        for (Contact myCon : Trigger.new) {
+            if (myCon.AccountId != null) {
+				List<Accounts> accs = [SELECT Id, OwnerId, FROM Account WHERE Id = :myCon.AccountId];
+				myCon.OwnerId = accs.get(0).OwnerId;		//get 0 to get the account, and dot notation the ownerId.
+            }
+        }
+    }
+	
+	//SHORTCUT FOR ONE RESULT, NO LIST, JUST SOBJECT
+	trigger MatchAccountOwner on Contact (before insert) {
+        for (Contact myCon : Trigger.new) {
+            if (myCon.AccountId != null) {
+				Account acc = [SELECT Id, OwnerId, FROM Account WHERE Id = :myCon.AccountId LIMIT 1];
+				myCon.OwnerId = acc.OwnerId;		//SOQL'd just one account, no need for accessing List.
+            }
+        }
+    }
+
+
+
+How to use SOQL with APEX?
+
+SOQL IN APEX - LIST
+- Use raw SOQL in trigger and store it in a list. The output is always a list.
+- Non-queried fields are not stored in the list.
+- SOQL queries can only be stored in lists and not sets, because SOQL queries are always ordered.
+- Bulkify code: Do not include SOQL in for loops. Query outside the loop, add to list, and mass update one list.
+	
+	List<SObject> myList = [SOQL Query on SObject];
+	List<Lead> leadList = [SELECT Id FROM Lead];
+	List<Case> caseList = [SELECT Id, Owner.Username 
+						   FROM Case 
+						   WHERE Origin = 'Web' 
+						   AND CreatedDate = THIS_YEAR 
+						   ORDER BY Status ASC, CreatedDate DESC];
+	
+	
+	
+APEX IN SOQL - BIND
+- Bind variables: Use APEX variables inside SOQL queries, especially in WHERE.
+- Just stick a colon ':' and it will treat the next term as APEX.
+	
+ trrigger UpdateContactAddresses on Account (before update) {
+		for (Account acc : Trigger.new) {
+			List<Contact> contacts = [SELECT Id FROM Contact WHERE AccountId = :acc.Id];		//Include APEX variable using ':'
+			
+			for (Contact myCon : contacts) {
+				myCon.MailingStreet = acc.BillingStreet;
+				myCon.MailingCity = acc.BillingCity;
+			}
+			update contacts;
+		}
+	}
+	
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+DE-DUPING TRIGGER
+- Know a lead is a dupe if the email is the same as a contact's.
+- Process: Match records based on email address. Add dupe leads to 'Data Quality' Queue. Add a note in lead description to tell which contacts matched to that lead.
 
