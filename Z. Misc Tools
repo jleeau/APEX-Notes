@@ -1,0 +1,11 @@
+//Methods
+
+UserInfo.getUserId();		
+//Gets the user's Id for whoever is running the test class.
+
+System.assert(updatedLead.Description.contains(firstDupe.Id));	
+//Asserts if a string contains some other string rather than equality.
+
+Date.today().addDays(-1);
+//Removes days from a date.
+
