@@ -67,5 +67,63 @@ THE DEPLOYMENT LIFE CYCLE
 FAILED DEPLOYMENT
 - Sandbox-to-sandbox deployment is unrestricted, but all tests are run to production.
 - If a single assertion fails, nothing is deployed.
-- 
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+PRACTICE PROJECTS
+
+PROJECT 1. Write a trigger that sets a case status to "closed" if there are more than 2 cases created THAT DAY
+    associated with the SAME CONTACT.
+    Also, CLOSE the case if there are MORE THAN 3 CASES created on that account that day.
+
+
+//PROJECT 1 TRIGGER
+trigger TooManyCases on Case (before insert) {
+	List<Case> casesToCheck = new List<Case>();		//holds all trigger cases
+    List<Case> checkContact = new List<Case>();		//holds all contact's cases		
+    List<Case> checkAccount = new List<Case>();		//holds all account's cases
     
+    for (Case myCase : Trigger.new) {
+        //Prepare bind variables
+        Id caseContactId = myCase.ContactId;
+        Id caseAccountId = myCase.AccountId;
+        System.debug(myCase.Id + ' entered. ContactId: ' + myCase.ContactId
+                    + ', AccountId: ' + myCase.AccountId);
+        
+        //SOQL all the cases associated with either the contact or account.
+        casesToCheck = [SELECT Id,
+                        	   AccountId,
+                        	   ContactId
+                          FROM Case
+                         WHERE CreatedDate = LAST_N_DAYS:1		//Today
+                           AND (Contact.Id =:caseContactId
+                        	OR Account.Id =:caseAccountId)];		
+        System.debug('Cases found: ' + casesToCheck.size() + '. ' + casesToCheck
+                     + ' ' + myCase.CreatedDate);
+        
+        for (Case c : casesToCheck) {
+            if (c.ContactId == caseContactId && checkContact.size() <= 2) {
+                checkContact.add(c);
+            }
+            if (c.AccountId == caseAccountId && checkAccount.size() <= 3) {
+                checkAccount.add(c);
+            }
+        }
+        System.debug('Contact cases found: ' + checkContact.size());
+        System.debug('Account cases found: ' + checkAccount.size());
+
+        
+        //Count number of cases found. If > 2, set myCase to closed.
+        if (checkContact.size() > 2 || checkAccount.size() > 3) {		//If either contact/account has > 3 cases, close.
+            myCase.Status = '8. Closed';
+        }
+        System.debug('The case\'s status is: ' + myCase.Status);
+    }
+}
+
+
+//PROJECT 2
+- On creation of an opportunity, add the opportunity OWNER's manager as an opportunity team member, with role 'Sales Manager'.
+- If the opportunity owner is him/herself a manager, add one of their direct employees as a 'Sales Rep' opportunity team member.
