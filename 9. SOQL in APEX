@@ -158,3 +158,16 @@ DE-DUPING TEST CLASS
 	- 1 contact matches.
 	- >1 contact matches.
 	- Fields are NOT populated. Hunt down null pointer exceptions.
+	
+	
+	
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+COMPARABLE OPPORTUNITIES
+- Show comparable opportunities whenever a new opportunity is created.
+- Know it is comparable if Opp amount is != 10% different, Accounts in the same industry, and Opportunity is Closed-Won. 
+- Have a related list with comparables.
+- JUNCTION OBJECT - A many-to-many pattern, e.g. Opportunity Product : Junction between an opportunity and product object.
+- To create a Comparable__c junction object, must have a BASE opportunity (Master-Detail) and also a COMPARABLE opportunity object (Lookup).
+- Other fields are comparable opportunity fields.
+- Process: Opportunity is inserted, run SOQL w/ all criteria for comparables, Found any Opps?, if yes, create junction objects by populating two fields on junction object that point to the base/comparable opportunities, if no, do nothing.
