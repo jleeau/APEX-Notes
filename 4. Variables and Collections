@@ -39,6 +39,7 @@ PRIMITIVE DATA TYPES
 - DATE:
 	- Date currentDate = Date.today();
 	- Secrets: .addDays(30), .newInstance(2020, 3, 17), .isLeapYear()
+	- LAST_N_DAYS:365
 - DATETIME:
 	- DateTime currentTime = DateTime.now();
 	- Tracks time and date extremely precisely.
