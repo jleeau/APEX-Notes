@@ -1,24 +1,24 @@
 DEFENSIVE TEST CLASSES
 
 System.assertEquals()
-    - A method to check if two values are equal.
-    - Expectations vs. reality. Set what outcome you think it will be.
-    - ONLY used in test classes. Should have at least one assertion in each test class.
-    - Needs SOQL to get the most up-to-date information on the records as updated by the trigger. Acts like a memory refresh.
-    - Stops code from deploying if assertions do not pass. Fails the entire test class.
-    - System.asserttEquals(input1, input2, input3);
-        - input1 - Expected value
-        - input2 - The reality, the unknown value that you hope will be equal
-        - input3 - The message to display if actual value != expected value
+- A method to check if two values are equal.
+- Expectations vs. reality. Set what outcome you think it will be.
+- ONLY used in test classes. Should have at least one assertion in each test class.
+- Needs SOQL to get the most up-to-date information on the records as updated by the trigger. Acts like a memory refresh.
+- Stops code from deploying if assertions do not pass. Fails the entire test class.
+- System.asserttEquals(input1, input2, input3);
+    - input1 - Expected value
+    - input2 - The reality, the unknown value that you hope will be equal
+    - input3 - The message to display if actual value != expected value
         
-    - E.g.
-        System.assertEquals('Marc Benioff', benioff.Name);  //Pass
-        System.assertEquals('Amazon', benioff.Account.Name, 'Do you live under a rock?!');  //Fail
-        System.assertEquals(30, benioff.Millionaire_age__c);    //Fail
-        System.assertEquals('Apple', benioff.Former_Employer__c);   //Pass
-        System.assertEquals(true, benioff.Invented_The_App_Store__c);   //Pass
+- E.g.
+    System.assertEquals('Marc Benioff', benioff.Name);  //Pass
+    System.assertEquals('Amazon', benioff.Account.Name, 'Do you live under a rock?!');  //Fail
+    System.assertEquals(30, benioff.Millionaire_age__c);    //Fail
+    System.assertEquals('Apple', benioff.Former_Employer__c);   //Pass
+    System.assertEquals(true, benioff.Invented_The_App_Store__c);   //Pass
         
-    - E.g. Trigger + Test Class
+- E.g. Trigger + Test Class
         trigger NewStatus on Lead (before insert) {
             for (Lead myLead : Trigger.new) {
                 myLead.Status = 'New';
@@ -34,7 +34,10 @@ System.assertEquals()
                 myLead.Company = 'Winterfell Hotels';
                 insert myLead
                 
-                Lead latestLead = [SELECT Status FROM Lead WHERE Id = :myLead.Id];      //Need SOQL to get the LATEST value of Status.
+                Lead latestLead = [SELECT Status FROM Lead WHERE Id = :myLead.Id];      
+                //Need SOQL to get the LATEST value of Status.
+                //WITHOUT SOQL, it will insert a new lead, and then check the Status, which is NULL.
+                //WITH SOQL, it will insert a new lead, trigger Status = 'New', query Status, then assert it.
                 
                 System.assertEquals('New', latestLead.Status);      //Checks if trigger works. Has value to us.
             }
@@ -45,6 +48,24 @@ System.assertEquals()
 
 
 TESTING IN SALESFORCE
-    - 
+- How to build a comprehensive shield for the whole org?
+- For each trigger, there is a test class (scenario), which has an assertion.
+- Assertions are Admin Commandments; it is global God rule which cannot be broken.
 
+
+THE DEPLOYMENT LIFE CYCLE
+- Production Org : All active users.
+- Full Sandbox : Exact copy of production including data.
+- Developer Sandbox : Production copy that has very little data.
+
+- Multiple developers create their own Triggers and test classes in Developer Sandbox.
+  Then they push it to sandbox. If any developer breaks other people's commandments, it will be captured when all tests are run.
+  When pushing from sandbox to production, all test classes will be run against a tiny trigger.
+  Assertions make sure the Commandments will not be broken.
+
+
+FAILED DEPLOYMENT
+- Sandbox-to-sandbox deployment is unrestricted, but all tests are run to production.
+- If a single assertion fails, nothing is deployed.
+- 
     
