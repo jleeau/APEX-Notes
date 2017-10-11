@@ -127,3 +127,7 @@ trigger TooManyCases on Case (before insert) {
 //PROJECT 2
 - On creation of an opportunity, add the opportunity OWNER's manager as an opportunity team member, with role 'Sales Manager'.
 - If the opportunity owner is him/herself a manager, add one of their direct employees as a 'Sales Rep' opportunity team member.
+
+
+
+
