@@ -129,5 +129,8 @@ trigger TooManyCases on Case (before insert) {
 - If the opportunity owner is him/herself a manager, add one of their direct employees as a 'Sales Rep' opportunity team member.
 
 
+//PROJECT 3
+- Trigger that sets the contact owner to whomever most recently created a case on the record. 
+- In the same trigger, set the account owner to whomever most recently created a case on it.
 
 
