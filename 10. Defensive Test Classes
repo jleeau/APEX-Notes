@@ -129,8 +129,76 @@ trigger TooManyCases on Case (before insert) {
 - If the opportunity owner is him/herself a manager, add one of their direct employees as a 'Sales Rep' opportunity team member.
 
 
-//PROJECT 3
+//PROJECT 3 Trigger
 - Trigger that sets the contact owner to whomever most recently created a case on the record. 
 - In the same trigger, set the account owner to whomever most recently created a case on it.
 
 
+trigger CaseContactOwner on Case (after insert) {		//after insert to grab the current caseId
+    
+    for (Case myCase : Trigger.new) {					//for every case that enters,
+        if (myCase.ContactId != null) {					//Check if current contact Id is not null
+            Contact myCon = [SELECT Name, Account.Id, Id			//Look up the contact for that case
+                               FROM Contact
+                              WHERE Id = :myCase.ContactId];
+            
+        
+            myCon.OwnerId = myCase.CreatedById;				//Set Contact Owner to Case Creator
+            update myCon;
+        }
+        //Query the Account for that case.
+        if (myCase.AccountId != null) {
+            Account myAcc = [SELECT Id
+                           	   FROM Account
+                              WHERE Id = :myCase.AccountId];
+            
+			//Set Account's owner to created by Id.
+			myAcc.OwnerId = myCase.CreatedById;
+            update myAcc;
+        }
+    }
+}
+
+//PROJECT 3 Test Class
+
+@isTest
+public class CaseContactOwnerTest {
+    @isTest static void createCase() {
+        //Create users
+        User myUser = new User();
+        myUser.FirstName = 'Pippi';
+		myUser.LastName = 'Longstockings';
+        myUser.Email = 'pippi@longstockings.com';
+        myUser.Username = 'piplong';
+        myUser.Alias = 'plong';
+        myUser.ProfileId = [SELECT Id
+                            FROM Profile
+                            WHERE Name = 'System Adminisrator'].Id;			//WHOA YOU CAN ACCESS ID OUTSIDE A SOQL QUERY.
+
+        myUser.ManagerId = null;
+		insert myuser;
+		
+        //Create account
+        Account acc = new Account();
+        acc.Name = 'Green Gables';
+        acc.OwnerId = myUser.Id;
+        insert acc;
+        
+        //Create case
+        Case myCase = new Case();
+        myCase.Subject = 'Poopy';
+        myCase.AccountId = acc.Id;
+        insert myCase;
+        
+        //Lookup updated account
+        Account updatedAcc = [SELECT OwnerId
+                             FROM Account
+                             WHERE Id = :acc.Id];
+        
+        System.assertEquals(UserInfo.getUserId(), updatedAcc.ownerId);
+    }
+}
+
+
+//PROJECT 4 TRIGGER
+- 
