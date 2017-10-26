@@ -201,4 +201,92 @@ public class CaseContactOwnerTest {
 
 
 //PROJECT 4 TRIGGER
-- 
+- When account phone no. updated, all related contacts' "Other Phone" is updated to this number.
+- Do not update if the country doesn't match.
+
+//When account phone no. updated, all related contacts' "Other Phone" is updated to this number.
+//Do not update if the country doesn't match.
+
+trigger UpdateAllContacts on Account (before update) {
+    for(Id accId : Trigger.newMap.keySet()) {
+        String oldPhone = Trigger.oldMap.get(accId).Phone;
+        String newPhone = Trigger.newMap.get(accId).Phone;
+        List<Contact> changeContacts = new List<Contact>();
+        
+        if(oldPhone != newPhone) {		//If Phone number was changed
+     		System.debug('Number was changed from ' + Trigger.oldMap.get(accId).Phone
+                    	+ ' to ' + Trigger.newMap.get(accId).Phone + '.');
+            
+            //Find all contacts under that account
+            List<Contact> myCon = [SELECT Id, Phone, Name
+                            		 FROM Contact
+                            		WHERE Account.Id = :accId];
+            System.debug(myCon);
+            
+            //Change all contacts' phone number
+            for (Contact c : myCon) {
+                c.Phone = newPhone;
+                changeContacts.add(c);
+                System.debug(c.Name + '\'s number was changed.');
+            }
+            update changeContacts;
+        } else {
+            System.debug('Phone was not changed.');
+        }
+	}
+}
+
+//PROJECT 4 TEST CLASS
+
+@isTest
+public class UpdateAllContactsTest {
+    @isTest static void updateContact() {
+        //Create RecordType id;
+        Map <String,Schema.RecordTypeInfo> recordTypeMap = Account.sObjectType.getDescribe().getRecordTypeInfosByName();
+        
+        //Create Client
+        Account client = new Account();
+        client.Name = 'TestClient';
+        client.CurrencyIsoCode = 'USD';
+        if (recordTypeMap.containsKey('Client')) {
+        	client.RecordTypeId = recordTypeMap.get('Client').getRecordTypeId();
+        }
+        insert client;
+        System.debug('Created Client: ' + client.Name);
+        
+        //Create LP
+        Account lp = new Account();
+        lp.Name = 'TestLPName';
+        lp.CurrencyIsoCode = 'USD';
+        lp.Phone = '100000';
+        if (recordTypeMap.containsKey('Local Partner')) {
+        	lp.RecordTypeId = recordTypeMap.get('Local Partner').getRecordTypeId();
+        }
+      	insert lp;
+		System.debug('Created LP: ' + lp.Name);
+		
+        //Create Contact
+        Contact myCon = new Contact();
+        myCon.FirstName = 'Teamo';
+        myCon.LastName = 'Supremo';
+        myCon.CurrencyIsoCode = 'USD';
+        myCon.Account_name__c = lp.Id;
+        myCon.Phone = '0451';
+        insert myCon;
+        System.debug('Created Contact: ' + myCon.FirstName + ' ' + myCon.LastName);
+        
+        //Testing Scenario: Account number is updated.
+        String oldVal = lp.Phone;
+        lp.Phone = '99999';
+        update lp;
+        
+        Contact updatedContact = [SELECT Id, Phone
+                        		  FROM Contact
+                        		  WHERE Id = :myCon.Id LIMIT 1];
+        
+        String newVal = updatedContact.Phone;
+        System.assertNotEquals(oldVal, newVal);
+        
+    }
+}
+
