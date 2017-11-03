@@ -290,3 +290,72 @@ public class UpdateAllContactsTest {
     }
 }
 
+
+PROJECT 5: MOVE ACCOUNTS TRIGGER
+//For new contacts, if there's an account website matching the contact's email domain, assign contact to that account.
+
+trigger MoveAccounts on Contact (before insert) {
+
+    for (Contact c : Trigger.new) {
+        //Isolate contact email domain
+        String domain = (c.Email.split('.com').get(0)).split('@').get(1);
+        System.debug(domain);		//snow
+        String searchString = '%' + domain + '%';
+        System.debug(searchString);
+        
+        //Lookup account's w/ that website domain
+        List<Account> matchAcc = [SELECT Id, Name, Website
+                              		FROM Account
+                             		WHERE Website LIKE :searchString
+                                 	LIMIT 1];
+        System.debug(matchAcc);
+        //Update to matching account
+        c.AccountId = matchAcc.get(0).Id;
+    }
+}
+
+
+PROJECT 5 TEST CLASS
+
+@isTest
+public class MoveAccountsTest {
+
+    @istest static void createContact() {
+        //Create RecordType id;
+        Map <String,Schema.RecordTypeInfo> recordTypeMapAcc = Account.sObjectType.getDescribe().getRecordTypeInfosByName();
+        Map <String,Schema.RecordTypeInfo> recordTypeMapCon = Contact.sObjectType.getDescribe().getRecordTypeInfosByName();
+        
+        //Create Client
+        Account client = new Account();
+        client.Name = 'TestClient';
+        client.CurrencyIsoCode = 'USD';
+        client.Website = 'www.snow.com.eu';
+        if (recordTypeMapAcc.containsKey('Client')) {
+        	client.RecordTypeId = recordTypeMapAcc.get('Client').getRecordTypeId();
+        }
+        insert client;
+        System.debug('Created Client: ' + client.Name);
+        
+        //Create Employee
+        Contact myContact = new Contact();
+        myContact.AccountId = '0010l000006v6LS';
+        if (recordTypeMapCon.containsKey('GEO Employee')) {
+          myContact.RecordTypeId = recordTypeMapCon.get('GEO Employee').getRecordTypeId();
+        }
+        myContact.RecordTypeId = '01290000001IDUD';
+        myContact.FirstName = 'Jon';
+        myContact.LastName = 'Snow';
+        myContact.Email = 'jon@snow.com';
+        myContact.CurrencyIsoCode = 'USD';
+        
+        insert myContact;
+        System.debug('Created Contact: ' + myContact.FirstName + ' ' +myContact.LastName);
+        
+        //Assertions
+        Contact checkContact = [SELECT Id, AccountId
+                               FROM Contact
+                               WHERE Id = :myContact.Id];
+        System.assertEquals(client.Id, checkContact.AccountId, 'Assertion failed: ' + checkContact.AccountId);
+        
+    }
+}
