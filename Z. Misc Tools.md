@@ -1,7 +1,7 @@
-//Methods
+## Useful Methods
 
 ```Apex UserInfo.getUserId();```
-//Gets the user's Id for whoever is running the test class.
+//Gets the user's Id for whomever is running the test class.
 
 ```Apex System.assert(updatedLead.Description.contains(firstDupe.Id));```
 //Asserts if a string contains some other string rather than equality.
